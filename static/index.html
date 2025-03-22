@@ -3,55 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pantry Genie</title>
+    <title>Pantry Genie - Login & Register</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            background-color: #4CAF50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin: 0;
+        }
+        section {
+            background: white;
+            margin: 20px auto;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+        }
+        h2 {
+            color: #333;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+        }
+        input, select, button {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin: 5px 0;
+            font-size: 16px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
     <script>
         const API_BASE_URL = "http://127.0.0.1:5000";
 
-        async function apiRequest(endpoint, method, body = null) {
-            const options = {
-                method,
+        async function registerUser() {
+            const username = document.getElementById("registerUsername").value;
+            const password = document.getElementById("registerPassword").value;
+            const role = document.getElementById("registerRole").value;
+
+            const response = await fetch(`${API_BASE_URL}/register_user`, {
+                method: "POST",
                 headers: { "Content-Type": "application/json" },
-            };
-            if (body) options.body = JSON.stringify(body);
-
-            const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+                body: JSON.stringify({ username, password, role }),
+            });
             const data = await response.json();
-            console.log(data); // Debug
-            return data;
+            alert(data.message || data.error);
         }
 
-        async function registerCustomer() {
-            const name = document.getElementById("customerName").value;
-            const illness = document.getElementById("illness").value;
-            const shopPref = document.getElementById("shopPref").value;
+        async function login() {
+            const username = document.getElementById("loginUsername").value;
+            const password = document.getElementById("loginPassword").value;
 
-            const response = await apiRequest('/register', 'POST', { name, illness, shoppref: shopPref });
-            alert(response.message);
-        }
+            const response = await fetch(`${API_BASE_URL}/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, password }),
+            });
+            const data = await response.json();
 
-        async function checkStock() {
-            const product = document.getElementById("checkStockProduct").value;
-            const shop = document.getElementById("checkStockShop").value;
-
-            const response = await apiRequest('/check_stock', 'POST', { product, shop });
-            alert(response.message);
+            if (data.role) {
+                alert(`Login successful! Welcome, ${data.role}.`);
+                // Redirect based on role (example only)
+                if (data.role === "admin") {
+                    window.location.href = "/admin_dashboard";
+                } else if (data.role === "shop_owner") {
+                    window.location.href = "/shop_dashboard";
+                } else {
+                    window.location.href = "/user_dashboard";
+                }
+            } else {
+                alert(data.error);
+            }
         }
     </script>
 </head>
 <body>
     <h1>Pantry Genie</h1>
+
     <section>
-        <h2>Register Customer</h2>
-        <label>Name: <input id="customerName" type="text"></label><br>
-        <label>Illness: <input id="illness" type="text"></label><br>
-        <label>Preferred Shop: <input id="shopPref" type="text"></label><br>
-        <button onclick="registerCustomer()">Register</button>
+        <h2>Register</h2>
+        <label for="registerUsername">Username</label>
+        <input id="registerUsername" type="text" placeholder="Enter username">
+        <label for="registerPassword">Password</label>
+        <input id="registerPassword" type="password" placeholder="Enter password">
+        <label for="registerRole">Role</label>
+        <select id="registerRole">
+            <option value="user">Customer</option>
+            <option value="shop_owner">Shop Owner</option>
+            <option value="admin">Admin</option>
+        </select>
+        <button onclick="registerUser()">Register</button>
     </section>
+
     <section>
-        <h2>Check Stock</h2>
-        <label>Product: <input id="checkStockProduct" type="text"></label><br>
-        <label>Shop: <input id="checkStockShop" type="text"></label><br>
-        <button onclick="checkStock()">Check Stock</button>
+        <h2>Login</h2>
+        <label for="loginUsername">Username</label>
+        <input id="loginUsername" type="text" placeholder="Enter username">
+        <label for="loginPassword">Password</label>
+        <input id="loginPassword" type="password" placeholder="Enter password">
+        <button onclick="login()">Login</button>
     </section>
 </body>
 </html>
