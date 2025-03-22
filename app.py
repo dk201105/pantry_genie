@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, send_from_directory
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask_cors import CORS
 import mysql.connector
 
@@ -188,6 +189,83 @@ def get_customers():
 
     except mysql.connector.Error as err:
         return jsonify({"error": f"Database error: {err}"}), 500
+
+
+@app.route('/register_user', methods=['POST'])
+def register_user():
+    data = request.json
+    username = data['username']
+    password = data['password']
+    role = data['role']  # 'user', 'shop_owner', or 'admin'
+
+    # Validate the role
+    if role not in ['customer', 'shop_owner', 'admin']:
+        return jsonify({"error": "Invalid role"}), 400
+
+    # Hash the password
+    hashed_password = generate_password_hash(password)
+
+    try:
+        cur1.execute(
+            "INSERT INTO users (username, password, role) VALUES (%s, %s, %s);",
+            (username, hashed_password, role)
+        )
+        con1.commit()
+        return jsonify({"message": f"User '{username}' registered successfully as {role}!"})
+    except mysql.connector.Error as err:
+        return jsonify({"error": f"Database error: {err}"}), 500
+
+
+# Login User
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    username = data['username']
+    password = data['password']
+
+    try:
+        cur1.execute("SELECT user_id, password, role FROM users WHERE username = %s;", (username,))
+        user = cur1.fetchone()
+
+        if user and check_password_hash(user[1], password):
+            user_id, _, role = user
+            return jsonify({"message": "Login successful!", "user_id": user_id, "role": role})
+        else:
+            return jsonify({"error": "Invalid username or password"}), 401
+
+    except mysql.connector.Error as err:
+        return jsonify({"error": f"Database error: {err}"}), 500
+
+
+# Example Admin-Only Route
+@app.route('/admin_dashboard', methods=['GET'])
+def admin_dashboard():
+    # Check user role (replace with session or token-based validation for production)
+    user_role = request.headers.get('Role')  # Pass role in headers for simplicity
+    if user_role != 'admin':
+        return jsonify({"error": "Unauthorized access"}), 403
+
+    return jsonify({"message": "Welcome to the Admin Dashboard!"})
+
+
+# Example Shop Owner-Only Route
+@app.route('/shop_dashboard', methods=['GET'])
+def shop_dashboard():
+    user_role = request.headers.get('Role')
+    if user_role != 'shop_owner':
+        return jsonify({"error": "Unauthorized access"}), 403
+
+    return jsonify({"message": "Welcome to the Shop Owner Dashboard!"})
+
+
+# Example User-Only Route
+@app.route('/user_dashboard', methods=['GET'])
+def user_dashboard():
+    user_role = request.headers.get('Role')
+    if user_role != 'user':
+        return jsonify({"error": "Unauthorized access"}), 403
+
+    return jsonify({"message": "Welcome to the User Dashboard!"})
 
 
 if __name__ == '__main__':
