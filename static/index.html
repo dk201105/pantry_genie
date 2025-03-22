@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pantry Genie</title>
+    <script>
+        const API_BASE_URL = "http://127.0.0.1:5000";
+
+        async function apiRequest(endpoint, method, body = null) {
+            const options = {
+                method,
+                headers: { "Content-Type": "application/json" },
+            };
+            if (body) options.body = JSON.stringify(body);
+
+            const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+            const data = await response.json();
+            console.log(data); // Debug
+            return data;
+        }
+
+        async function registerCustomer() {
+            const name = document.getElementById("customerName").value;
+            const illness = document.getElementById("illness").value;
+            const shopPref = document.getElementById("shopPref").value;
+
+            const response = await apiRequest('/register', 'POST', { name, illness, shoppref: shopPref });
+            alert(response.message);
+        }
+
+        async function checkStock() {
+            const product = document.getElementById("checkStockProduct").value;
+            const shop = document.getElementById("checkStockShop").value;
+
+            const response = await apiRequest('/check_stock', 'POST', { product, shop });
+            alert(response.message);
+        }
+    </script>
+</head>
+<body>
+    <h1>Pantry Genie</h1>
+    <section>
+        <h2>Register Customer</h2>
+        <label>Name: <input id="customerName" type="text"></label><br>
+        <label>Illness: <input id="illness" type="text"></label><br>
+        <label>Preferred Shop: <input id="shopPref" type="text"></label><br>
+        <button onclick="registerCustomer()">Register</button>
+    </section>
+    <section>
+        <h2>Check Stock</h2>
+        <label>Product: <input id="checkStockProduct" type="text"></label><br>
+        <label>Shop: <input id="checkStockShop" type="text"></label><br>
+        <button onclick="checkStock()">Check Stock</button>
+    </section>
+</body>
+</html>
